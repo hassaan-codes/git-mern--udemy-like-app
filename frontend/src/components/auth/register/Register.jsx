@@ -34,8 +34,8 @@ const Register = () => {
                         <Input 
                             required 
                             id='name' 
-                            value={email} 
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={name} 
+                            onChange={(e) => setName(e.target.value)}
                             placeholder='Full Name'
                             type='text'
                             focusBorderColor='purple.500'
