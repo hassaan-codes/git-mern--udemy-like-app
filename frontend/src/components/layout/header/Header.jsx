@@ -42,7 +42,7 @@ const Header = () => {
                     <VStack spacing={4} alignItems={'flex-start'}>
                         <LinkButton onClick={onClose} url='/' title='Home' />
                         <LinkButton onClick={onClose} url='/courses' title='Browse All Courses' />
-                        <LinkButton onClick={onClose} url='/request' title='Request a Course' />
+                        <LinkButton onClick={onClose} url='/requestcourse' title='Request a Course' />
                         <LinkButton onClick={onClose} url='/contactus' title='Contact Us' />
                         <LinkButton onClick={onClose} url='/about' title='About' />
 
