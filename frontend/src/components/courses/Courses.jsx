@@ -92,7 +92,7 @@ const Courses = () => {
                     title={'Test Title'}
                     description={'Test DEscription'}
                     views={23}
-                    imgSrc={'test src'}
+                    imgSrc={'https://i.pinimg.com/originals/43/af/d0/43afd01dc42127c352f1fde070cc2be0.jpg'}
                     id={'test id'}
                     creator={'test creator'}
                     lectureCount={2}

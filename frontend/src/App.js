@@ -15,14 +15,22 @@ import Subscribe from './components/payment/Subscribe'
 import PageNotFound from './components/not_found/PageNotFound'
 import PaymentSuccess from './components/payment/PaymentSuccess'
 import PaymentFail from './components/payment/PaymentFail'
+import CoursePage from './components/course_page/CoursePage'
+import Profile from './components/profile/Profile'
 
 const App = () => {
+  window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+  })
+
+
   return (
     <BrowserRouter>
       <Header />
         <Routes>  
           <Route path='/' element={ <Home/> } />
           <Route path='/courses' element={ <Courses/> } />
+          <Route path='/course/:id' element={ <CoursePage/> } />
           <Route path='/contactus' element={ <ContactUs/> } />
           <Route path='/about' element={ <About/> } />
           <Route path='/requestcourse' element={ <RequestCourse/> } />
@@ -30,6 +38,8 @@ const App = () => {
           <Route path='/register' element={ <Register/> } />
           <Route path='/forgetpassword' element={ <ForgetPassword/> } />
           <Route path='/resetpassword/:resetToken' element={ <ResetPassword/> } />
+
+          <Route path='/profile' element={ <Profile/> }/>
 
           <Route path='/subscribe' element={ <Subscribe/> } />
           <Route path='/paymentsuccess' element={ <PaymentSuccess/> } />
