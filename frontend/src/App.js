@@ -17,6 +17,12 @@ import PaymentSuccess from './components/payment/PaymentSuccess'
 import PaymentFail from './components/payment/PaymentFail'
 import CoursePage from './components/course_page/CoursePage'
 import Profile from './components/profile/Profile'
+import ChangePassword from './components/profile/ChangePassword'
+import UpdateProfile from './components/profile/UpdateProfile'
+import Dashboard from './components/admin/dashboard/Dashboard'
+import CreateCourse from './components/admin/create_course/CreateCourse'
+import AdminCourses from './components/admin/admin_courses/AdminCourses'
+import Users from './components/admin/users/Users'
 
 const App = () => {
   window.addEventListener('contextmenu', (e) => {
@@ -40,10 +46,20 @@ const App = () => {
           <Route path='/resetpassword/:resetToken' element={ <ResetPassword/> } />
 
           <Route path='/profile' element={ <Profile/> }/>
+          <Route path='/changepassword' element={ <ChangePassword/> }/>
+          <Route path='/updateprofile' element={ <UpdateProfile/> }/>
+          
 
           <Route path='/subscribe' element={ <Subscribe/> } />
           <Route path='/paymentsuccess' element={ <PaymentSuccess/> } />
           <Route path='/paymentfail' element={ <PaymentFail/> } />
+
+          
+          <Route path='/admin/dashboard' element={ <Dashboard/> } />
+          <Route path='/admin/createcourse' element={ <CreateCourse/> } />
+          <Route path='/admin/courses' element={ <AdminCourses/> } />
+          <Route path='/admin/users' element={ <Users/> } />
+
 
           <Route path='*' element={ <PageNotFound/> } />
         </Routes>
