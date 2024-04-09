@@ -1,11 +1,11 @@
+const promiseHandler = require('../middlewares/promiseHandler.middleware');
 const courseModel = require('../models/course.model');
+const CustomError = require('../utils/customError');
 
-const getAllCourses = async (req, res) => {
+const getAllCourses = promiseHandler(async (req, res, next) => {
     const courses = await courseModel.find();
-    res.status(200).json({
-        success:true,
-        courses,
-    });
-}
+    
+    next(new CustomError("Test Error", 60098));
+});
 
 module.exports = {getAllCourses};
