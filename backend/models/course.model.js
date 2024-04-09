@@ -67,6 +67,6 @@ const courseSchema = new mongoose.Schema({
     }
 });
 
-export const courseModel = mongoose.Model('Course', courseSchema);
+const courseModel = mongoose.model('Course', courseSchema);
 
 module.exports = courseModel;
