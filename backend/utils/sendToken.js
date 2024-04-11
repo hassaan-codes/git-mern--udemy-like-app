@@ -4,11 +4,10 @@ const sendToken = (res, user, message, statusCode) => {
     const options = {
         expires: new Date(Date.now() + 1000*60*60*24*15),
         httponly: true,
-        secure: true,
-        samesite: true,
+        sameSite: 'none',
     }
 
-    res.status(statusCode).cookie('token', token, options).json({
+    res.status(statusCode).cookie('udemy_replica_auth_token', token, options).json({
         success: true,
         message: message,
         user: user,

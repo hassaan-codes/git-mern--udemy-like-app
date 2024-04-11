@@ -36,4 +36,27 @@ const register = promiseHandler(async (req, res, next) => {
     }
 });
 
+const login = promiseHandler(async (req, res, next) => {
+    const {email, password} = req.body;
+    if(!email || !password)
+    {
+        return next(new CustomError('Please add all fields!'), 400);
+    }
+
+    const userExists = await userModel.findOne({ email });
+    if(!userExists)
+    {
+        return next('Incorrect email or password!', 404);
+    }
+
+    const passwordMatched = userExists.comparePassword();
+
+    if(!passwordMatched)
+    {
+        return next('Incorrect email or password!', 404);
+    }
+
+    sendToken(res, userExists, `Welcome back ${userExists.name}`, 200);
+})
+
 module.exports = {register}
