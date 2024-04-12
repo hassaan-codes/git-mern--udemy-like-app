@@ -1,3 +1,4 @@
+const tokenString = 'token';
 
 const sendToken = (res, user, message, statusCode) => {
     const token = user.getJwtToken();
@@ -7,11 +8,20 @@ const sendToken = (res, user, message, statusCode) => {
         sameSite: 'none',
     }
 
-    res.status(statusCode).cookie('udemy_replica_auth_token', token, options).json({
+    res.status(statusCode).cookie(tokenString, token, options).json({
         success: true,
         message: message,
         user: user,
     })
 }
 
-module.exports = sendToken;
+const resetToken = (res, message, statusCode) => {
+    res.status(statusCode).cookie(tokenString, null, {
+        expires: new Date(Date.now()),
+    }).json({
+        success: true,
+        message: message,
+    });
+}
+
+module.exports = {sendToken, resetToken, tokenString};

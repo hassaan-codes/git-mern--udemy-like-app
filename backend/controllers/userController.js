@@ -1,7 +1,7 @@
 const promiseHandler = require("../middlewares/promiseHandler");
 const userModel = require("../models/user.model");
 const CustomError = require("../utils/customError");
-const sendToken = require("../utils/sendToken");
+const {sendToken, resetToken} = require("../utils/sendToken");
 
 const register = promiseHandler(async (req, res, next) => {
     const {name, email, password} = req.body;
@@ -43,20 +43,34 @@ const login = promiseHandler(async (req, res, next) => {
         return next(new CustomError('Please add all fields!'), 400);
     }
 
-    const userExists = await userModel.findOne({ email });
+    const userExists = await userModel.findOne({ email }).select('+password');
     if(!userExists)
     {
         return next('Incorrect email or password!', 404);
     }
 
-    const passwordMatched = userExists.comparePassword();
+    const passwordMatched = userExists.comparePassword(password);
 
     if(!passwordMatched)
     {
         return next('Incorrect email or password!', 404);
     }
-
+chrcccc
     sendToken(res, userExists, `Welcome back ${userExists.name}`, 200);
-})
+});
 
-module.exports = {register}
+const logout = promiseHandler(async (req, res, next) => {
+    resetToken(res, 'logout successfully', 200);
+});
+
+const getMyProfile = promiseHandler(async (req, res, next) => {
+    const user = await userModel.findById(req.user._id);
+
+    res.status(200).json({
+        success: true,
+        message: "Profie",
+        user: user,
+    })
+});
+
+module.exports = {register, login, logout, getMyProfile};
