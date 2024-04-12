@@ -73,4 +73,52 @@ const getMyProfile = promiseHandler(async (req, res, next) => {
     })
 });
 
-module.exports = {register, login, logout, getMyProfile};
+const changePassword = promiseHandler(async (req, res, next) => {
+    const {oldPassword, newPassword} = req.body;
+    
+    if(!oldPassword || !newPassword)
+    {
+        return next(new CustomError('Please add all fields', 400));
+    }
+    
+    const user = await userModel.findById(req.user._id).select('+password');
+
+    const passwordMatched = await user.comparePassword(oldPassword);
+    if(!passwordMatched)
+    {
+        return next(new CustomError('Old password is incorrect!', 401));
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Password changed successfully!",
+    })
+});
+
+const updateProfile = promiseHandler(async (req, res, next) => {
+    const {name, email} = req.body;
+
+    const user = await userModel.findById(req.user._id);
+
+    if(name)
+    {
+        user.name = name;
+    }
+    if(email)
+    {
+        user.email = email;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Profile updated successfully!",
+        user: user,
+    });
+});
+
+module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile};
