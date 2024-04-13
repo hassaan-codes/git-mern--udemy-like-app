@@ -3,6 +3,7 @@ const userModel = require("../models/user.model");
 const CustomError = require("../utils/customError");
 const sendEmail = require("../utils/sendEmail");
 const {sendToken, resetToken} = require("../utils/sendToken");
+const crypto = require('crypto');
 
 const register = promiseHandler(async (req, res, next) => {
     const {name, email, password} = req.body;
@@ -45,18 +46,18 @@ const login = promiseHandler(async (req, res, next) => {
     }
 
     const userExists = await userModel.findOne({ email }).select('+password');
+    
     if(!userExists)
     {
-        return next('Incorrect email or password!', 404);
+        return next(new CustomError('Incorrect email or password!', 404));
     }
 
-    const passwordMatched = userExists.comparePassword(password);
+    const passwordMatched = await userExists.comparePassword(password);
 
     if(!passwordMatched)
     {
-        return next('Incorrect email or password!', 404);
+        return next(new CustomError('Incorrect email or password!', 404));
     }
-chrcccc
     sendToken(res, userExists, `Welcome back ${userExists.name}`, 200);
 });
 
@@ -135,9 +136,11 @@ const forgotPassword = promiseHandler(async (req, res, next) => {
         return next(new CustomError("User doesn't exist!", 404));
     }
 
-    const resetToken = user.getResetToken();
-    const url = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
+    const resetToken = await user.getResetToken();
 
+    await user.save();
+
+    const url = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
     const message = `Click on the link to reset your password ${url}. If you didn't send this request then please ignore this email.`;
     sendEmail(user.email, "UdemyReplica Password Reset", message);
 
@@ -147,4 +150,38 @@ const forgotPassword = promiseHandler(async (req, res, next) => {
     });
 });
 
-module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile, forgotPassword}; 
+const resetPassword = promiseHandler(async (req, res, next) => {
+    const {token} = req.params;
+    const hashedToken = await crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await userModel.findOne({
+        resetPasswordToken: hashedToken,
+        resetPasswordExpire: {
+            $gt: Date.now(),
+        }
+    });
+
+    if(!user)
+    {
+        return next(new CustomError('Link has been expired!', 401));
+    }
+
+    const {password} = req.body;
+
+    if(!password)
+    {
+        return next(new CustomError('Please enter the password'));
+    }
+
+    user.password = password;
+    user.resetPasswordToken = "";
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Password changed successfully!",
+    });
+});
+
+module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile, forgotPassword, resetPassword}; 
