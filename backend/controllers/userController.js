@@ -1,6 +1,7 @@
 const promiseHandler = require("../middlewares/promiseHandler");
 const userModel = require("../models/user.model");
 const CustomError = require("../utils/customError");
+const sendEmail = require("../utils/sendEmail");
 const {sendToken, resetToken} = require("../utils/sendToken");
 
 const register = promiseHandler(async (req, res, next) => {
@@ -121,4 +122,29 @@ const updateProfile = promiseHandler(async (req, res, next) => {
     });
 });
 
-module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile};
+const forgotPassword = promiseHandler(async (req, res, next) => {
+    const {email} = req.body;
+    if(!email)
+    {
+        return next(new CustomError('Please enter email!', 401));
+    }
+    const user = await userModel.findOne({email});
+
+    if(!user)
+    {
+        return next(new CustomError("User doesn't exist!", 404));
+    }
+
+    const resetToken = user.getResetToken();
+    const url = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
+
+    const message = `Click on the link to reset your password ${url}. If you didn't send this request then please ignore this email.`;
+    sendEmail(user.email, "UdemyReplica Password Reset", message);
+
+    res.status(200).json({
+        success: true,
+        message: "An email with link to reset password has been sent to " + user.email,
+    });
+});
+
+module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile, forgotPassword}; 
