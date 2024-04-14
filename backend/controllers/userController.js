@@ -1,4 +1,5 @@
 const promiseHandler = require("../middlewares/promiseHandler");
+const courseModel = require("../models/course.model");
 const userModel = require("../models/user.model");
 const CustomError = require("../utils/customError");
 const sendEmail = require("../utils/sendEmail");
@@ -184,4 +185,62 @@ const resetPassword = promiseHandler(async (req, res, next) => {
     });
 });
 
-module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile, forgotPassword, resetPassword}; 
+const addToPlaylist = promiseHandler(async (req, res, next) => {
+    const user = await userModel.findById(req.user._id);
+    
+    const {id} = req.body;
+    const course = await courseModel.findById(id);
+
+    if(!course)
+    {
+        return next(new CustomError('Course not found Or Invalid course Id!', 404));
+    }
+
+    const alreadyAdded = user.playlist.find((item) => {
+        if(item.course.toString() === course._id.toString())
+        {
+            return true;
+        }
+    })
+
+    if (alreadyAdded)
+    {
+        return next(new CustomError('Course already added!', 409));
+    }
+
+    user.playlist.push({
+        course: course._id,
+        poster: course.poster.url,
+    })
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Added to playlist!",
+    });
+})
+
+const removeFromPlaylist = promiseHandler(async (req, res, next) => {
+    const user = await userModel.findById(req.user._id);
+    
+    const courseId = req.query.id;
+    const newPlaylist = user.playlist.filter((item) => {
+        if(item.course.toString() !== courseId.toString())
+        {
+            return item;
+        } 
+            
+    });
+
+
+    user.playlist = newPlaylist;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Removed from playlist!',
+    });
+})
+
+module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile, forgotPassword, resetPassword, addToPlaylist, removeFromPlaylist}; 

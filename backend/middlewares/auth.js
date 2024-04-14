@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/user.model');
+const CustomError = require('../utils/customError');
 
 const isAuthenticated = async (req, res, next) => {
     const {token} = req.cookies;
