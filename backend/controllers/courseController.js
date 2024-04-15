@@ -1,6 +1,8 @@
 const promiseHandler = require('../middlewares/promiseHandler');
 const courseModel = require('../models/course.model');
 const CustomError = require('../utils/customError');
+const getDataUri = require('../utils/dataUri');
+const cloudinary = require('cloudinary');
 
 const getAllCourses = promiseHandler(async (req, res, next) => {
     
@@ -66,6 +68,10 @@ const createCourse = promiseHandler(async (req, res, next) => {
     const {title, description, category, createdBy} = req.body;
     const file = req.file;
 
+    const fileUri = getDataUri(file);
+    
+    const cloud = await cloudinary.v2.uploader.upload(fileUri.content);
+
     if(!title || !description || !category || !createdBy)
     {
         return next(new CustomError("Please add all the fields", 400));     
@@ -77,8 +83,8 @@ const createCourse = promiseHandler(async (req, res, next) => {
         category: category,
         createdBy: createdBy,
         poster: {
-            public_id: 'temp',
-            url: 'temp',
+            public_id: cloud.public_id,
+            url: cloud.secure_url,
         },
     });
 
