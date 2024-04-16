@@ -31,8 +31,14 @@ const getCourseLectures = promiseHandler(async (req, res, next) => {
 })
 
 const addLectureToCourse = promiseHandler(async (req, res, next) => {
-    
     const course = await courseModel.findById(req.params.id);
+
+    const file = req.file;
+    const fileUri = getDataUri(file);
+    const cloud = await cloudinary.v2.uploader.upload(fileUri.content, {
+        resource_type: "video",
+    });
+
     if(!course)
     {
         return next(new CustomError('Course not found!', 404));
@@ -50,8 +56,8 @@ const addLectureToCourse = promiseHandler(async (req, res, next) => {
         title,
         description,
         video:{
-            public_id: 'temp',
-            url: 'temp',
+            public_id: cloud.public_id,
+            url: cloud.secure_url,
         }
     });
     
@@ -66,10 +72,9 @@ const addLectureToCourse = promiseHandler(async (req, res, next) => {
 
 const createCourse = promiseHandler(async (req, res, next) => {
     const {title, description, category, createdBy} = req.body;
-    const file = req.file;
-
-    const fileUri = getDataUri(file);
     
+    const file = req.file;
+    const fileUri = getDataUri(file);
     const cloud = await cloudinary.v2.uploader.upload(fileUri.content);
 
     if(!title || !description || !category || !createdBy)
@@ -94,4 +99,60 @@ const createCourse = promiseHandler(async (req, res, next) => {
     })
 });
 
-module.exports = {getAllCourses, createCourse, getCourseLectures, addLectureToCourse};
+const deleteCourse = promiseHandler(async (req, res, next) => {
+    const id = req.params.id;
+    const course = await courseModel.findById(id);
+    if(!course)
+    {
+        return next(new CustomError('Course not found!', 403));
+    }
+
+    await cloudinary.v2.uploader.destroy(course.poster.public_id);
+
+    for(let i = 0; i < course.lectures.length; i++)
+    {
+        let lectureId = course.lectures[i].video.public_id;
+        await cloudinary.v2.uploader.destroy(lectureId, {
+            resource_type: "video",
+        });
+    }
+
+    await courseModel.deleteOne({_id: id});
+
+    res.status(200).json({
+        success: true,
+        message: "Course deleted successfully!",
+    });
+})
+
+const deleteLecture = promiseHandler(async (req, res, next) => {
+    const {courseId, lectureId} = req.query;
+
+    const course = await courseModel.findById(courseId);
+    if(!course)
+    {
+        return next(new CustomError('Course not found!', 403));
+    }
+
+    const lecture = course.lectures.find(lecture => {
+        if(lecture._id.toString() === lectureId.toString()) return lecture;
+    });
+
+    await cloudinary.v2.uploader.destroy(lecture.video.public_id, {
+        resource_type: "video",
+    });
+
+    course.lectures = course.lectures.filter((lecture) => {
+        if(lecture._id.toString() !== lectureId.toString()) return lecture;
+    })
+
+    course.totalVideos = course.lectures.length;
+    await course.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Lecture deleted successfully!",
+    });
+});
+
+module.exports = {getAllCourses, createCourse, getCourseLectures, addLectureToCourse, deleteCourse, deleteLecture};

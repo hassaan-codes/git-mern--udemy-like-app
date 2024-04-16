@@ -15,4 +15,15 @@ const isAuthenticated = async (req, res, next) => {
     next();
 }
 
-module.exports = {isAuthenticated};
+const isAdmin = async (req, res, next) => {
+    const role = req.user.role;
+
+    if(role !== 'admin')
+    {
+        return next(new CustomError(`${role} is not allowed to access this resourse`));
+    }
+
+    next();
+}
+
+module.exports = {isAuthenticated, isAdmin};
