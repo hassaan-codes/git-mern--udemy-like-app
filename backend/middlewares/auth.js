@@ -26,4 +26,13 @@ const isAdmin = async (req, res, next) => {
     next();
 }
 
-module.exports = {isAuthenticated, isAdmin};
+const isSubscriber = async (req, res, next) => {
+    if(req.user.subscription.status !== 'active' && req.user.role !== 'admin')
+    {
+        return next(new CustomError('Only subscribers can access this resourse', 403));
+    }
+
+    next();
+}
+
+module.exports = {isAuthenticated, isAdmin, isSubscriber};

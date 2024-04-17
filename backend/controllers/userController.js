@@ -2,13 +2,15 @@ const promiseHandler = require("../middlewares/promiseHandler");
 const courseModel = require("../models/course.model");
 const userModel = require("../models/user.model");
 const CustomError = require("../utils/customError");
+const getDataUri = require("../utils/dataUri");
 const sendEmail = require("../utils/sendEmail");
 const {sendToken, resetToken} = require("../utils/sendToken");
 const crypto = require('crypto');
+const cloudinary = require('cloudinary');
 
 const register = promiseHandler(async (req, res, next) => {
     const {name, email, password} = req.body;
-    const avatar = req.file;
+    const file = req.file;
 
     if(!name || !email || !password)
     {
@@ -21,13 +23,16 @@ const register = promiseHandler(async (req, res, next) => {
         return next(new CustomError("User already exists!", 409));
     }
 
+    const fileUri = getDataUri(file);
+    const cloudUpload = await cloudinary.v2.uploader.upload(fileUri.content);
+
     const newUser = await userModel.create({
         name: name,
         email: email,
         password: password,
         avatar: {
-            public_id: 'temp ID',
-            url: 'temp URL',
+            public_id: cloudUpload.public_id,
+            url: cloudUpload.secure_url,
         }
     });
 
@@ -243,4 +248,87 @@ const removeFromPlaylist = promiseHandler(async (req, res, next) => {
     });
 })
 
-module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile, forgotPassword, resetPassword, addToPlaylist, removeFromPlaylist}; 
+const updateProfilePic = promiseHandler(async (req, res, next) => {
+    const user = await userModel.findById(req.user._id);
+    const file = req.file;
+
+    const fileUri = getDataUri(file);
+    const cloudUpload = await cloudinary.v2.uploader.upload(file.content);
+
+    await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+
+    user.avatar = {
+        public_id: cloudUpload.public_id,
+        url: cloudUpload.secure_url,
+    }
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Profile picture updated successfully!",
+    });
+})
+
+//------------ Admin Controllers --------------
+
+const getAllUsers = promiseHandler(async (req, res, next) => {
+    const users = await userModel.find({});
+    
+    res.status(200).json({
+        success: true,
+        message: users,
+    });
+})
+
+const updateUserRole = promiseHandler(async (req, res, next) => {
+    const user = await userModel.findById(req.params.id);
+
+    if(!user)
+    {
+        return next(new CustomError('User not found!', 404));
+    }
+
+    user.role = (user.role === 'user') ? 'admin' : 'user';
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "User role updated successfully!",
+    })
+})
+
+const deleteUser = promiseHandler(async (req, res, next) => {
+    const id = req.params.id;
+    const user = await userModel.findById(id);
+    if(!user)
+    {
+        return next(new CustomError('User not found!', 404));
+    }
+
+    // cancel subscription
+
+    await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+    await userModel.deleteOne({_id: id});
+
+    res.status(200).json({
+        success: true,
+        message: "User deleted successfully!",
+    })
+})
+
+const deleteSelf = promiseHandler(async (req, res, next) => {
+    const user = userModel.findById(req.user._id);
+
+    if(!user) return next(new CustomError('Profile not found!', 404));
+
+    //cancel subscription if any
+
+    await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+    await userModel.deleteOne({_id: id});
+
+    resetToken(res, 'Profile deleted successfully', 200);
+})
+
+
+module.exports = {register, login, logout, getMyProfile, changePassword, updateProfile, forgotPassword, resetPassword, addToPlaylist, removeFromPlaylist, updateProfilePic, getAllUsers, updateUserRole, deleteUser, deleteSelf}; 
